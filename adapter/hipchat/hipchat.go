@@ -2,10 +2,11 @@ package hipchat
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/daneharrigan/hipchat"
 	"github.com/danryan/env"
 	"github.com/danryan/hal"
-	"strings"
 )
 
 func init() {
@@ -129,8 +130,9 @@ func (a *adapter) startConnection() error {
 	}
 
 	client.Status("chat")
+	users := <-client.Users()
 
-	for _, user := range client.Users() {
+	for _, user := range users {
 		// retrieve the name and mention name of our bot from the server
 		if user.Id == client.Id {
 			a.name = user.Name
@@ -146,6 +148,7 @@ func (a *adapter) startConnection() error {
 				"mentionName": user.MentionName,
 			},
 		}
+
 		// Prepopulate our users map because we can easily do so.
 		// If a user doesn't exist, set it.
 		u, err := a.Robot.Users.Get(user.Id)
@@ -161,7 +164,8 @@ func (a *adapter) startConnection() error {
 
 	// Make a map of room JIDs to human names
 	roomJids := make(map[string]string, len(client.Rooms()))
-	for _, room := range client.Rooms() {
+	rooms := <-client.Rooms()
+	for _, room := range rooms {
 		roomJids[room.Name] = room.Id
 	}
 	client.Status("chat")
